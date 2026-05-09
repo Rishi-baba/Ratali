@@ -37,7 +37,26 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 100,
     },
+    
+    dailyStats: {
+      totalTasks: {
+        type: Number,
+        default: 0,
+      },
+
+      completedTasks: {
+        type: Number,
+        default: 0,
+      },
+    },
+
+    lastTaskReset: {
+      type: Date,
+      default: Date.now,
+    },
+
   },
+
   {
     timestamps: true,
   }
