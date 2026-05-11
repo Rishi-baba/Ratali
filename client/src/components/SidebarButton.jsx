@@ -1,10 +1,16 @@
+import { useNavigate } from "react-router-dom";
+
 const SidebarButton = ({
   icon,
   label,
   active = false,
+  path
 }) => {
+  const navigate = useNavigate();
+
   return (
     <button
+      onClick={() => path && navigate(path)}
       className={`
         relative
         w-full
@@ -20,7 +26,7 @@ const SidebarButton = ({
         ${
           active
             ? "text-white"
-            : "text-[#5b3925] hover:text-white hover:translate-x-1 "
+            : "text-[#876957] hover:text-white hover:translate-x-1 "
         }
       `}
     >

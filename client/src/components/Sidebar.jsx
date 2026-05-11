@@ -3,10 +3,13 @@ import {
   CheckSquare,
   Brain,
 } from "lucide-react";
+import { useLocation } from "react-router-dom";
 
 import SidebarButton from "./SidebarButton";
 
 const Sidebar = ({ className }) => {
+  const location = useLocation();
+
   return (
     <div
       className={`
@@ -24,17 +27,22 @@ const Sidebar = ({ className }) => {
         <SidebarButton
           icon={<LayoutDashboard size={20} />}
           label="Panda"
-          active
+          path="/panda-zone"
+          active={location.pathname === "/panda-zone"}
         />
 
         <SidebarButton
           icon={<CheckSquare size={20} />}
           label="Tasks"
+          path="/tasks"
+          active={location.pathname === "/tasks"}
         />
 
         <SidebarButton
           icon={<Brain size={20} />}
-          label="Dashboard"
+          label="Focus"
+          path="/dashboard"
+          active={location.pathname === "/dashboard"}
         />
 
       </div>

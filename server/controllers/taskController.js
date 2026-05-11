@@ -2,191 +2,271 @@ import Task from "../models/Task.js";
 import User from "../models/User.js";
 import resetDailyStats from "../utils/resetDailyStats.js";
 
-// CREATE TASK
 export const createTask = async (req, res) => {
   try {
-
-    const {
-      title,
-      type,
-      subTasks,
-      dueDate,
-    } = req.body;
-
-    // find user
+    const { title, description, category, taskType, bambooReward, dueDate, repeatFrequency } = req.body;
     const user = await User.findById(req.user._id);
-
-    // reset if new day
     await resetDailyStats(user);
 
-    // create task
     const task = await Task.create({
-      user: req.user._id,
+      createdBy: req.user._id,
       title,
-      type,
-      subTasks,
+      description,
+      category,
+      taskType,
+      bambooReward: bambooReward || 5,
       dueDate,
+      repeatFrequency
     });
 
-    // increase daily task count
     user.dailyStats.totalTasks += 1;
-
     await user.save();
-
     res.status(201).json(task);
-
   } catch (error) {
-
-    res.status(500).json({
-      message: error.message,
-    });
-
+    res.status(500).json({ message: error.message });
   }
 };
 
-
-
-
-
-// GET TASKS
 export const getTasks = async (req, res) => {
   try {
+    const { filter } = req.query; // all, today, daily, repeated, completed, pending, miniTasks
+    let query = { createdBy: req.user._id };
 
-    const tasks = await Task.find({
-      user: req.user._id,
+    if (filter === "today") query.taskType = "today";
+    else if (filter === "daily") query.taskType = "daily";
+    else if (filter === "repeated") query.taskType = "repeated";
+    else if (filter === "completed") query.completed = true;
+    else if (filter === "pending") query.completed = false;
+    else if (filter === "miniTasks") query["miniTasks.0"] = { $exists: true };
+
+    const tasks = await Task.find(query).sort({ createdAt: -1 });
+
+    const user = await User.findById(req.user._id);
+    await resetDailyStats(user);
+
+    res.status(200).json({
+      tasks,
+      taskCounts: {
+        total: user.dailyStats.totalTasks,
+        completed: user.dailyStats.completedTasks
+      }
     });
-
-    res.status(200).json(tasks);
-
   } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
+    res.status(500).json({ message: error.message });
   }
 };
 
+export const getDeadlines = async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tasks = await Task.find({
+      createdBy: req.user._id,
+      dueDate: { $gte: today },
+      completed: false
+    }).sort({ dueDate: 1 }).limit(5);
+    res.status(200).json(tasks);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getTodayTasks = async (req, res) => {
+  try {
+    const tasks = await Task.find({ createdBy: req.user._id, taskType: "today" }).sort({ createdAt: -1 });
+    res.status(200).json(tasks);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getDailyTasks = async (req, res) => {
+  try {
+    const tasks = await Task.find({ createdBy: req.user._id, taskType: "daily" }).sort({ createdAt: -1 });
+    res.status(200).json(tasks);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getRepeatedTasks = async (req, res) => {
+  try {
+    const tasks = await Task.find({ createdBy: req.user._id, taskType: "repeated" }).sort({ createdAt: -1 });
+    res.status(200).json(tasks);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const updateTask = async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.id);
+    if (!task) return res.status(404).json({ message: "Task not found" });
+    if (task.createdBy.toString() !== req.user._id.toString()) return res.status(401).json({ message: "Not authorized" });
+
+    const updatedTask = await Task.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.status(200).json(updatedTask);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 export const completeTask = async (req, res) => {
   try {
-
-    // find task
     const task = await Task.findById(req.params.id);
+    if (!task) return res.status(404).json({ message: "Task not found" });
+    if (task.createdBy.toString() !== req.user._id.toString()) return res.status(401).json({ message: "Not authorized" });
+    if (task.completed) return res.status(400).json({ message: "Task already completed" });
 
-    // task exists?
-    if (!task) {
-      return res.status(404).json({
-        message: "Task not found",
-      });
-    }
-
-    // owner check
-    if (task.user.toString() !== req.user._id.toString()) {
-      return res.status(401).json({
-        message: "Not authorized",
-      });
-    }
-
-    // already completed?
-    if (task.completed) {
-      return res.status(400).json({
-        message: "Task already completed",
-      });
-    }
-
-    // find user
     const user = await User.findById(req.user._id);
-
-    // reset daily stats if needed
     await resetDailyStats(user);
 
-    // mark complete
     task.completed = true;
-
     await task.save();
 
-    // completed task count
     user.dailyStats.completedTasks += 1;
-
-    // bamboo reward
-    const bambooReward = Math.floor(
-      100 / user.dailyStats.totalTasks
-    );
-
-    // add bamboo
-    user.bamboo += bambooReward;
-
-    // panda happy
+    const reward = task.bambooReward || 5;
+    user.bamboo += reward;
     user.pandaMood = "happy";
-
     await user.save();
 
     res.status(200).json({
       message: "Task completed 🐼",
-      reward: bambooReward,
+      task,
+      reward,
       bamboo: user.bamboo,
       completedTasks: user.dailyStats.completedTasks,
       totalTasks: user.dailyStats.totalTasks,
     });
-
   } catch (error) {
-
-    res.status(500).json({
-      message: error.message,
-    });
-
+    res.status(500).json({ message: error.message });
   }
 };
 
-
-// DELETE TASK
 export const deleteTask = async (req, res) => {
   try {
-
     const task = await Task.findById(req.params.id);
+    if (!task) return res.status(404).json({ message: "Task not found" });
+    if (task.createdBy.toString() !== req.user._id.toString()) return res.status(401).json({ message: "Not authorized" });
 
-    if (!task) {
-      return res.status(404).json({
-        message: "Task not found",
-      });
-    }
-
-    // owner check
-    if (task.user.toString() !== req.user._id.toString()) {
-      return res.status(401).json({
-        message: "Not authorized",
-      });
-    }
-
-    // find user
     const user = await User.findById(req.user._id);
-
-    // reset if needed
     await resetDailyStats(user);
 
-    // decrease total tasks ONLY if task incomplete
     if (!task.completed) {
-
-      user.dailyStats.totalTasks -= 1;
-
-      // prevent negative values
-      if (user.dailyStats.totalTasks < 0) {
-        user.dailyStats.totalTasks = 0;
-      }
+      user.dailyStats.totalTasks = Math.max(0, user.dailyStats.totalTasks - 1);
     }
-
     await user.save();
-
     await task.deleteOne();
 
-    res.status(200).json({
-      message: "Task deleted",
-    });
-
+    res.status(200).json({ message: "Task deleted" });
   } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
-    res.status(500).json({
-      message: error.message,
-    });
+export const addMiniTask = async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.id);
+    if (!task) return res.status(404).json({ message: "Task not found" });
+    if (task.createdBy.toString() !== req.user._id.toString()) return res.status(401).json({ message: "Not authorized" });
+    if (task.taskType !== "today") return res.status(400).json({ message: "Mini tasks can only be added to today tasks" });
 
+    const { title, timerDuration } = req.body;
+    task.miniTasks.push({ title, timerDuration: timerDuration || 0 });
+    await task.save();
+
+    res.status(201).json(task);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const completeMiniTask = async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.id);
+    if (!task) return res.status(404).json({ message: "Task not found" });
+    if (task.createdBy.toString() !== req.user._id.toString()) return res.status(401).json({ message: "Not authorized" });
+
+    const miniTask = task.miniTasks.id(req.params.miniId);
+    if (!miniTask) return res.status(404).json({ message: "Mini task not found" });
+
+    miniTask.completed = !miniTask.completed;
+    await task.save();
+
+    res.status(200).json(task);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const deleteMiniTask = async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.id);
+    if (!task) return res.status(404).json({ message: "Task not found" });
+    if (task.createdBy.toString() !== req.user._id.toString()) return res.status(401).json({ message: "Not authorized" });
+
+    task.miniTasks.pull(req.params.miniId);
+    await task.save();
+
+    res.status(200).json(task);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const startTimer = async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.id);
+    if (!task) return res.status(404).json({ message: "Task not found" });
+    if (task.createdBy.toString() !== req.user._id.toString()) return res.status(401).json({ message: "Not authorized" });
+
+    const miniTask = task.miniTasks.id(req.params.miniId);
+    if (!miniTask) return res.status(404).json({ message: "Mini task not found" });
+
+    miniTask.timerActive = true;
+    miniTask.timerStartedAt = new Date();
+    await task.save();
+
+    res.status(200).json(task);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const extendTimer = async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.id);
+    if (!task) return res.status(404).json({ message: "Task not found" });
+    if (task.createdBy.toString() !== req.user._id.toString()) return res.status(401).json({ message: "Not authorized" });
+
+    const miniTask = task.miniTasks.id(req.params.miniId);
+    if (!miniTask) return res.status(404).json({ message: "Mini task not found" });
+
+    const { extraMinutes } = req.body;
+    miniTask.timerDuration += (extraMinutes || 5);
+    await task.save();
+
+    res.status(200).json(task);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const stopTimer = async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.id);
+    if (!task) return res.status(404).json({ message: "Task not found" });
+    if (task.createdBy.toString() !== req.user._id.toString()) return res.status(401).json({ message: "Not authorized" });
+
+    const miniTask = task.miniTasks.id(req.params.miniId);
+    if (!miniTask) return res.status(404).json({ message: "Mini task not found" });
+
+    miniTask.timerActive = false;
+    miniTask.timerCompleted = true;
+    await task.save();
+
+    res.status(200).json(task);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
