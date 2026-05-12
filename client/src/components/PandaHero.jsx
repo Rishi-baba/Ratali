@@ -217,40 +217,39 @@ const PandaHero = ({
       <div
         className="
           absolute
-          left-[23%]
-          top-[38%]
-          bg-[#fff7e8]
-          px-4
-          py-3
-          rounded-[28px]
-          shadow-lg
+          left-[15%]
+          top-[32%]
+          bg-[#fff7e8]/90
+          backdrop-blur-sm
+          px-5
+          py-3.5
+          rounded-[30px]
+          shadow-xl
           z-30
+          border border-white/20
         "
       >
-
         <p
           className="
             text-[15px]
             text-[#5b3925]
-            font-semibold
+            font-bold
             leading-snug
           "
         >
-          {currentHealth <= 0 ? (
-            <>
-              I'm dead...<br/>Revive me!
-            </>
-          ) : currentHealth <= 20 ? (
-            <>
-              So hungry...<br/>Help...
-            </>
-          ) : (
-            <>
-              Mmm...<br/>
-              yummy<br/>
-              bamboo!
-            </>
-          )}
+          {(() => {
+            if (currentHealth <= 0) return "Zzz... panda gave up 😵‍💫";
+            if (currentHealth <= 10) return "Panda almost eepy 🥱";
+            if (currentHealth <= 20) return "Paws too tireddd... 🐾";
+            if (currentHealth <= 30) return "My bamboo is fading... 🥀";
+            if (currentHealth <= 40) return "Panda feeling lonely 🥺";
+            if (currentHealth <= 50) return "Let’s focus together 🎯";
+            if (currentHealth <= 60) return "Getting a lil sleepy... 💤";
+            if (currentHealth <= 70) return "Tiny panda needs hugs 🫂";
+            if (currentHealth <= 80) return "You’re doing great! ✨";
+            if (currentHealth <= 90) return "So much bamboo energy! 🎋";
+            return "Panda super happy! 🐼";
+          })()}
         </p>
 
         {/* tail */}
@@ -258,14 +257,15 @@ const PandaHero = ({
           className="
             absolute
             -bottom-2
-            left-7
-            w-4
-            h-4
+            right-[15%]
+            w-5
+            h-5
             rotate-45
-            bg-[#fff7e8]
+            bg-[#fff7e8]/90
+            -z-10
+            shadow-lg
           "
         />
-
       </div>
 
       {currentHealth <= 0 && (
@@ -286,7 +286,7 @@ const PandaHero = ({
           bottom-[2%]
           left-1/2
           -translate-x-1/2
-          w-[26%]
+          w-[23%]
           object-contain
           z-20
           drop-shadow-[0_18px_30px_rgba(0,0,0,0.35)]

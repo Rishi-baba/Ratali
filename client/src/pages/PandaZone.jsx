@@ -102,7 +102,7 @@ const PandaZone = () => {
     <div className="min-h-screen w-full bg-black flex items-center justify-center relative">
       <Link
         to="/"
-        className="absolute top-6 left-8 z-50 text-[#82d85f] font-extrabold text-3xl tracking-widest drop-shadow-lg hover:text-[#a0ea83] transition-all duration-300 italic"
+        className="absolute  -top-1 left-8 z-50  text-[#65a34e] font-extrabold text-3xl tracking-widest drop-shadow-lg hover:text-[#a0ea83] transition-all duration-300 italic"
       >
         Ratali
       </Link>

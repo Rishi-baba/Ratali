@@ -1,6 +1,19 @@
+import { useState, useEffect } from "react";
 import pandaImage from "../assets/focus-panda.png";
 
 const TodaysFocusCard = () => {
+  const [focusTime, setFocusTime] = useState(0);
+
+  useEffect(() => {
+    const today = new Date().toISOString().split("T")[0];
+    const stored = JSON.parse(localStorage.getItem("ratali_focus_time") || "{}");
+    if (stored.date === today) {
+      setFocusTime(stored.focusTime || 0);
+    }
+  }, []);
+
+  const hoursFocused = (focusTime / 3600).toFixed(1);
+
   return (
     <div
       className="
@@ -12,7 +25,6 @@ const TodaysFocusCard = () => {
         overflow-hidden
       "
     >
-
       {/* TITLE */}
       <h2
         className="
@@ -28,10 +40,8 @@ const TodaysFocusCard = () => {
 
       {/* MAIN CONTENT */}
       <div className="flex items-center justify-between flex-1">
-
         {/* LEFT */}
         <div className="flex items-center gap-3">
-
           {/* PANDA */}
           <img
             src={pandaImage}
@@ -45,7 +55,6 @@ const TodaysFocusCard = () => {
 
           {/* TEXT */}
           <div>
-
             <p
               className="
                 text-[12px]
@@ -53,7 +62,7 @@ const TodaysFocusCard = () => {
                 leading-none
               "
             >
-              You've got
+              You've
             </p>
 
             <h3
@@ -65,7 +74,7 @@ const TodaysFocusCard = () => {
                 my-1
               "
             >
-              4.5
+              {hoursFocused}
             </h3>
 
             <p
@@ -76,11 +85,9 @@ const TodaysFocusCard = () => {
                 leading-none
               "
             >
-              focus hours left
+              hours focused today
             </p>
-
           </div>
-
         </div>
 
         {/* OPTIONAL MINI ICON */}

@@ -1,8 +1,11 @@
 import useAuthStore from "../store/authStore";
+import pandaLogo from "../assets/hero/health_100to50.png";
 
 const MoodCard = () => {
   const { user } = useAuthStore();
   const level = user?.pandaLevel || 1;
+  const totalHealthFed = user?.totalHealthFed || 0;
+  const progress = (totalHealthFed % 500) / 500 * 100;
 
   return (
     <div
@@ -10,19 +13,18 @@ const MoodCard = () => {
         h-full
         w-full
         px-5
-
         flex
         flex-col
       "
     >
-
       {/* TITLE */}
       <h2
         className="
-          text-[18px]
+          text-[15px]
           font-bold
           text-[#5b3925]
-          mb-3
+          mt-1
+          mb-1
         "
       >
         Panda's Level
@@ -30,17 +32,15 @@ const MoodCard = () => {
 
       {/* CONTENT */}
       <div className="flex items-center gap-3">
-
         {/* panda icon */}
         <img
-          src="https://cdn-icons-png.flaticon.com/128/3069/3069172.png"
+          src={pandaLogo}
           alt="Panda Level"
-          className="w-14 h-14 object-contain"
+          className="w-12 h-12 object-contain -ml-1"
         />
 
-        {/* mood text */}
-        <div>
-
+        {/* mood text and progress */}
+        <div className="flex-1">
           <h3
             className="
               text-[16px]
@@ -52,20 +52,33 @@ const MoodCard = () => {
             Level {level}
           </h3>
 
+          {/* Progress Bar Container */}
+          <div className="mt-2">
+            <div className="flex justify-between items-center mb-0.5">
+              <span className="text-[10px] text-[#8b7551] font-medium">Progress</span>
+              <span className="text-[10px] text-[#8b7551] font-bold">{Math.round(progress)}%</span>
+            </div>
+            <div className="w-full h-1.5 bg-[#eadcbc] rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-[#67b84f] rounded-full transition-all duration-500"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+
           <p
             className="
-              text-[13px]
+              text-[9px]
               text-[#7a5a32]
-              mt-2
+              mt-1
+              italic
+              leading-none
             "
           >
-            Keep it up!
+            {500 - (totalHealthFed % 500)} health to next level!
           </p>
-
         </div>
-
       </div>
-
     </div>
   );
 };
