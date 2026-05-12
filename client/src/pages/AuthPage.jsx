@@ -72,7 +72,7 @@ function AuthPage() {
       setUser(data);
       setToken(data.token);
 
-      navigate("/dashboard");
+      navigate("/panda");
     } catch (error) {
       setError(error.response?.data?.message || (isLogin ? "Login failed" : "Register failed"));
     } finally {

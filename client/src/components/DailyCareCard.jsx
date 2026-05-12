@@ -1,30 +1,43 @@
+import { useState } from "react";
 import CareTaskItem from "./CareTaskItem";
+import useAuthStore from "../store/authStore";
+import API from "../api/axios";
 
-const tasks = [
-  {
-    id: 1,
-    title: "Feed Panda",
-    completed: true,
-  },
-  {
-    id: 2,
-    title: "Play Together",
-    completed: true,
-  },
-  {
-    id: 3,
-    title: "Clean & Tidy",
-    completed: true,
-  },
-  {
-    id: 4,
-    title: "Nap Time",
-    completed: false,
-    progress: "0/1",
-  },
-];
+const DailyCareCard = ({ onAction }) => {
+  const { user, setUser } = useAuthStore();
+  const [loading, setLoading] = useState(false);
 
-const DailyCareCard = () => {
+  const handleTask = async (action, cost, healthAmount) => {
+    if (loading) return;
+    setLoading(true);
+    try {
+      const res = await API.post("/users/action", { action, cost, healthAmount });
+      setUser(res.data);
+      if (onAction) onAction(action === "nap" ? "sleeping" : action);
+    } catch (err) {
+      alert(err.response?.data?.message || `Failed to perform ${action}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const tasks = [
+    {
+      id: 1,
+      title: "Bath Panda (10 🎋)",
+      completed: user?.bathDoneToday || false,
+      onClick: () => handleTask("bath", 10, 10),
+      progress: "+10% ❤️"
+    },
+    {
+      id: 2,
+      title: "Nap Time (10 🎋)",
+      completed: user?.napDoneToday || false,
+      onClick: () => handleTask("nap", 10, 10),
+      progress: "+10% ❤️"
+    }
+  ];
+
   return (
     <div
       className="
@@ -57,6 +70,7 @@ const DailyCareCard = () => {
             title={task.title}
             completed={task.completed}
             progress={task.progress}
+            onClick={task.onClick}
           />
         ))}
 

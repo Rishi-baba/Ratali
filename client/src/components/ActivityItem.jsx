@@ -3,6 +3,8 @@ const ActivityItem = ({
   title,
   happiness,
   duration,
+  cost,
+  onClick
 }) => {
   return (
     <div
@@ -81,11 +83,13 @@ const ActivityItem = ({
             leading-none
           "
         >
-          {duration} min
+          {duration && `${duration} min `}
+          {cost !== undefined && `(-${cost}🎋)`}
         </span>
 
 
         <button
+          onClick={onClick}
           className="
             w-8
             h-8

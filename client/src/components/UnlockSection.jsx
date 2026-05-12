@@ -1,45 +1,29 @@
-import UnlockItem from "./UnlockItem";
-
-const items = [
-  {
-    id: 1,
-    title: "Hammock",
-    image:
-      "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=400",
-  },
-  {
-    id: 2,
-    title: "Water Fountain",
-    image:
-      "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?q=80&w=400",
-  },
-  {
-    id: 3,
-    title: "Cozy Tent",
-    image:
-      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=400",
-  },
-  {
-    id: 4,
-    title: "Bamboo Chair",
-    image:
-      "https://images.unsplash.com/photo-1494526585095-c41746248156?q=80&w=400",
-  },
-  {
-    id: 5,
-    title: "Lantern Lights",
-    image:
-      "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?q=80&w=400",
-  },
-  {
-    id: 6,
-    title: "Flower Garden",
-    image:
-      "https://images.unsplash.com/photo-1490750967868-88aa4486c946?q=80&w=400",
-  },
-];
+import useAuthStore from "../store/authStore";
 
 const UnlockSection = () => {
+  const { user } = useAuthStore();
+
+  const inventory = [
+    {
+      id: "pizza",
+      title: "Pizza",
+      count: user?.foodInventory?.pizza || 0,
+      image: "https://cdn-icons-png.flaticon.com/128/628/628324.png",
+    },
+    {
+      id: "momos",
+      title: "Momos",
+      count: user?.foodInventory?.momos || 0,
+      image: "https://cdn-icons-png.flaticon.com/128/742/742920.png",
+    },
+    {
+      id: "maggie",
+      title: "Maggie",
+      count: user?.foodInventory?.maggie || 0,
+      image: "https://cdn-icons-png.flaticon.com/128/2927/2927347.png",
+    },
+  ];
+
   return (
     <div
       className="
@@ -49,82 +33,43 @@ const UnlockSection = () => {
         py-2
         flex
         items-center
-        gap-3
+        gap-6
         overflow-hidden
       "
     >
-
       {/* LEFT CTA */}
-      <div className="shrink-0 ml-3 mt-1 w-36.25">
-
-        <h2
-          className="
-            text-[14px]
-            font-bold
-            text-[#5b3925]
-            leading-none
-          "
-        >
-          Unlock More Fun!
+      <div className="shrink-0 ml-3 mt-1 w-36">
+        <h2 className="text-[14px] font-bold text-[#5b3925] leading-none">
+          Food Inventory
         </h2>
-
-        <p
-          className="
-            text-[10px]
-            text-[#7a5a32]
-            mt-1
-            leading-snug
-          "
-        >
-          Upgrade your Panda's room and unlock new items!
+        <p className="text-[10px] text-[#7a5a32] mt-1 leading-snug">
+          Count of special treats you bought for the panda!
         </p>
-
-        <button
-          className="
-            mt-3
-            bg-[#4fa63f]
-            hover:bg-[#5ab748]
-            text-white
-            px-5
-            py-1.5
-            rounded-2xl
-            text-[12px]
-            font-bold
-            shadow-md
-            transition-all
-            duration-300
-          "
-        >
-          Visit Shop
-        </button>
-
       </div>
 
       {/* ITEMS */}
       <div
         className="
           flex
-          gap-2
+          gap-4
           overflow-x-auto
           overflow-y-hidden
           flex-1
           pb-1
+          items-center
         "
-        style={{
-          scrollbarWidth: "none",
-          msOverflowStyle: "none",
-        }}>
-
-        {items.map((item) => (
-          <UnlockItem
-            key={item.id}
-            title={item.title}
-            image={item.image}
-          />
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+      >
+        {inventory.map((item) => (
+          <div key={item.id} className="flex flex-col items-center justify-center bg-[#f4e8cd] rounded-xl border-2 border-[#e3d2af] p-2 w-20 shadow-sm relative transition-transform hover:scale-105">
+            <img src={item.image} alt={item.title} className="w-8 h-8 object-contain mb-1 drop-shadow-md" />
+            <span className="text-[11px] font-bold text-[#5b3925] text-center leading-none">{item.title}</span>
+            <div className="absolute -top-2 -right-2 bg-[#ff5722] text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-md">
+              {item.count}
+            </div>
+          </div>
         ))}
-
       </div>
-
     </div>
   );
 };

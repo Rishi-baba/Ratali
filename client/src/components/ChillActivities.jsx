@@ -1,49 +1,74 @@
+import { useState } from "react";
 import ActivityItem from "./ActivityItem";
+import useAuthStore from "../store/authStore";
+import API from "../api/axios";
 
 const activities = [
   {
     id: 1,
-    title: "Watch Fireflies",
-    happiness: 10,
+    title: "Watch YT Shorts",
+    cost: 50,
     duration: 10,
-    image:
-      "https://cdn-icons-png.flaticon.com/128/869/869869.png",
+    happiness: 10,
+    actionName: "yt",
+    image: "https://cdn-icons-png.flaticon.com/128/1384/1384060.png",
   },
   {
     id: 2,
-    title: "Listen to Music",
-    happiness: 8,
-    duration: 10,
-    image:
-      "https://cdn-icons-png.flaticon.com/128/3659/3659784.png",
+    title: "Talk to RJ",
+    cost: 0,
+    happiness: 5,
+    actionName: "rj",
+    image: "https://cdn-icons-png.flaticon.com/128/3659/3659784.png",
   },
   {
     id: 3,
-    title: "Bubble Bath",
-    happiness: 15,
-    duration: 15,
-    image:
-      "https://cdn-icons-png.flaticon.com/128/2927/2927347.png",
+    title: "Buy Maggie",
+    cost: 200,
+    happiness: 20,
+    actionName: "maggie",
+    image: "https://cdn-icons-png.flaticon.com/128/2927/2927347.png",
   },
   {
     id: 4,
-    title: "Nap Time",
-    happiness: 12,
-    duration: 20,
-    image:
-      "https://cdn-icons-png.flaticon.com/128/742/742920.png",
+    title: "Buy Momos",
+    cost: 200,
+    happiness: 20,
+    actionName: "momos",
+    image: "https://cdn-icons-png.flaticon.com/128/742/742920.png",
   },
   {
     id: 5,
-    title: "Forest Walk",
-    happiness: 18,
-    duration: 25,
-    image:
-      "https://cdn-icons-png.flaticon.com/128/628/628324.png",
+    title: "Buy Pizza",
+    cost: 500,
+    happiness: 50,
+    actionName: "pizzaEat",
+    image: "https://cdn-icons-png.flaticon.com/128/628/628324.png",
   },
 ];
 
-const ChillActivities = () => {
+const ChillActivities = ({ onAction }) => {
+  const { setUser } = useAuthStore();
+  const [loading, setLoading] = useState(false);
+
+  const handleActionClick = async (activity) => {
+    if (loading) return;
+    setLoading(true);
+    try {
+      const res = await API.post("/users/action", { 
+        action: activity.actionName, 
+        cost: activity.cost, 
+        healthAmount: activity.happiness 
+      });
+      setUser(res.data);
+      if (onAction) onAction(activity.actionName);
+    } catch (err) {
+      alert(err.response?.data?.message || `Failed to perform ${activity.title}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div
       className="
@@ -105,6 +130,8 @@ const ChillActivities = () => {
               title={activity.title}
               happiness={activity.happiness}
               duration={activity.duration}
+              cost={activity.cost}
+              onClick={() => handleActionClick(activity)}
             />
           ))}
 

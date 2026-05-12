@@ -2,10 +2,12 @@ const CareTaskItem = ({
   title,
   completed = false,
   progress,
+  onClick,
 }) => {
   return (
     <div
-      className="
+      onClick={!completed ? onClick : undefined}
+      className={`
         flex
         items-center
         justify-between
@@ -13,7 +15,8 @@ const CareTaskItem = ({
         border-b
         border-[#eadcbc]
         last:border-none
-      "
+        ${!completed ? 'cursor-pointer hover:bg-[#fff9e6] rounded px-1 transition-colors' : 'opacity-70'}
+      `}
     >
 
       {/* LEFT */}

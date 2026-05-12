@@ -116,7 +116,7 @@ const UpcomingDeadlinesCard = () => {
 
             return (
               <div
-                key={item.id}
+                key={item._id || index}
                 className={`
                   flex
                   items-center

@@ -1,6 +1,26 @@
+import API from "../api/axios";
+import useAuthStore from "../store/authStore";
+
 const PandaHero = ({
   pandaImage,
+  currentHealth = 100,
 }) => {
+  const { user, setUser } = useAuthStore();
+
+  const handleRevive = async () => {
+    try {
+      const res = await API.post("/users/action", { action: "revive" });
+      setUser(res.data);
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to revive");
+    }
+  };
+
+  let healthStatus = "Healthy";
+  if (currentHealth <= 0) healthStatus = "Dead";
+  else if (currentHealth < 20) healthStatus = "Critical";
+  else if (currentHealth < 40) healthStatus = "Weak";
+  else if (currentHealth < 60) healthStatus = "Fine";
   return (
     <div
       className="
@@ -86,18 +106,14 @@ const PandaHero = ({
             </h3>
 
             <p
-              className="
-                text-[10px]
-                text-[#7a5a32]
-                mt-1
-              "
+              className={`text-[10px] mt-1 font-semibold ${currentHealth <= 20 ? 'text-red-500 animate-pulse' : 'text-[#7a5a32]'}`}
             >
-              So healthy!
+              {healthStatus}
             </p>
           </div>
 
           <div className="text-[40px]">
-            😊
+            {currentHealth > 50 ? "😊" : currentHealth > 0 ? "😰" : "💀"}
           </div>
 
         </div>
@@ -124,9 +140,8 @@ const PandaHero = ({
                 font-bold
               "
             >
-              85%
+              {Math.round(currentHealth)}%
             </span>
-
           </div>
 
           <div
@@ -139,12 +154,8 @@ const PandaHero = ({
             "
           >
             <div
-              className="
-                h-full
-                w-[85%]
-                bg-[#82d85f]
-                rounded-full
-              "
+              className={`h-full rounded-full transition-all duration-1000 ${currentHealth <= 20 ? 'bg-red-500' : 'bg-[#82d85f]'}`}
+              style={{ width: `${currentHealth}%` }}
             />
           </div>
 
@@ -185,7 +196,7 @@ const PandaHero = ({
               text-[#f8e7c5]
             "
           >
-            1,250
+            {user?.bamboo || 0}
           </p>
 
           <p
@@ -225,11 +236,21 @@ const PandaHero = ({
             leading-snug
           "
         >
-          Mmm...
-          <br />
-          yummy
-          <br />
-          bamboo!
+          {currentHealth <= 0 ? (
+            <>
+              I'm dead...<br/>Revive me!
+            </>
+          ) : currentHealth <= 20 ? (
+            <>
+              So hungry...<br/>Help...
+            </>
+          ) : (
+            <>
+              Mmm...<br/>
+              yummy<br/>
+              bamboo!
+            </>
+          )}
         </p>
 
         {/* tail */}
@@ -247,6 +268,15 @@ const PandaHero = ({
 
       </div>
 
+      {currentHealth <= 0 && (
+        <div className="absolute bottom-[20%] left-1/2 -translate-x-1/2 z-40 flex flex-col items-center">
+          <p className="text-red-500 font-bold bg-white/80 px-4 py-2 rounded-xl mb-2 shadow animate-pulse">Panda is Dead! (Needs 500 🎋)</p>
+          <button onClick={handleRevive} className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-8 rounded-full shadow-xl transition-transform hover:scale-105 active:scale-95">
+            Revive Panda
+          </button>
+        </div>
+      )}
+
       {/* PANDA */}
       <img
         src={pandaImage}
@@ -256,7 +286,7 @@ const PandaHero = ({
           bottom-[2%]
           left-1/2
           -translate-x-1/2
-          w-[34%]
+          w-[26%]
           object-contain
           z-20
           drop-shadow-[0_18px_30px_rgba(0,0,0,0.35)]

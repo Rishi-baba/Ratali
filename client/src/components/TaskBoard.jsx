@@ -2,11 +2,13 @@ import { useState, useEffect } from "react";
 import TaskCard from "./TaskCard";
 import AddTaskModal from "../components/AddTaskModal";
 import API from "../api/axios";
+import useAuthStore from "../store/authStore";
 
 const categories = ["All", "Work", "Study", "Personal", "Health", "Home"];
 const allTaskFilters = ["All", "Mini Tasks", "Daily Tasks", "Today's Tasks", "Repeated Tasks", "Completed", "Pending"];
 
 const TaskBoard = ({ activeTab = "Today" }) => {
+  const { user, setUser } = useAuthStore();
   const [tasks, setTasks] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [allTasksFilter, setAllTasksFilter] = useState("All");
@@ -30,6 +32,8 @@ const TaskBoard = ({ activeTab = "Today" }) => {
     try {
       await API.put(`/tasks/${id}/complete`);
       fetchTasks();
+      const userRes = await API.get("/users/me");
+      setUser(userRes.data);
     } catch (err) {
       console.error(err);
     }
@@ -99,20 +103,34 @@ const TaskBoard = ({ activeTab = "Today" }) => {
     return filtered;
   };
 
-  const renderTaskCard = (task) => (
-    <TaskCard
-      key={task._id}
-      id={task._id}
-      title={task.title}
-      category={task.category}
-      reward={task.bambooReward || task.reward}
-      time={task.dueDate ? new Date(task.dueDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ""}
-      completed={task.completed}
-      repeatFrequency={activeTab === "Repeated" || activeTab === "All Tasks" ? task.repeatFrequency : null}
-      onToggleComplete={handleToggleComplete}
-      onDelete={handleDelete}
-    />
-  );
+  const renderTaskCard = (task) => {
+    let displayReward = task.bambooReward || task.reward || 5;
+
+    if (task.taskType === "today" && !task.completed) {
+      const pendingTodayTasksCount = tasks.filter(t => t.taskType === "today" && !t.completed).length;
+      const remainingPool = Math.max(0, 100 - (user?.claimedBambooToday || 0));
+      if (pendingTodayTasksCount > 0) {
+        displayReward = Math.floor(remainingPool / pendingTodayTasksCount);
+      } else {
+        displayReward = remainingPool;
+      }
+    }
+
+    return (
+      <TaskCard
+        key={task._id}
+        id={task._id}
+        title={task.title}
+        category={task.category}
+        reward={displayReward}
+        time={task.dueDate ? new Date(task.dueDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ""}
+        completed={task.completed}
+        repeatFrequency={activeTab === "Repeated" || activeTab === "All Tasks" ? task.repeatFrequency : null}
+        onToggleComplete={handleToggleComplete}
+        onDelete={handleDelete}
+      />
+    );
+  };
 
   const renderTodayTab = () => {
     const todayTasks = getFilteredTasks().filter(t => t.taskType === "today" || t.taskType === "repeated");
@@ -310,6 +328,7 @@ const MiniTaskForm = ({ taskId, onAdd }) => {
 const MiniTask = ({ mini, onToggleComplete, onDelete }) => {
   const [timer, setTimer] = useState(mini.timerDuration ? mini.timerDuration * 60 : 0);
   const [showFinish, setShowFinish] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   useEffect(() => {
     if (!timer) return;
@@ -329,40 +348,80 @@ const MiniTask = ({ mini, onToggleComplete, onDelete }) => {
   const startTimer = (mins) => setTimer(mins * 60);
   const extend = (mins) => setTimer((t) => t + mins * 60);
 
+  const handleCheckboxClick = (e) => {
+    e.stopPropagation();
+    if (!mini.completed) {
+      setShowConfirmModal(true);
+    } else {
+      onToggleComplete(mini._id);
+    }
+  };
+
+  const handleConfirm = () => {
+    setShowConfirmModal(false);
+    onToggleComplete(mini._id);
+  };
+
   return (
-    <div className="group w-[75%] bg-[#fff5df]/90 border border-[#e5d4af] rounded-2xl px-4 py-2 flex items-center justify-between transition-all duration-300 hover:scale-[1.01] relative">
-      <div className="flex items-center gap-3">
-        <button onClick={() => onToggleComplete(mini._id)} className={`w-5 h-5 rounded-lg flex items-center justify-center text-white text-sm font-bold shrink-0 ${mini.completed ? "bg-[#67b84f]" : "border-2 border-[#d9c39a]"}`}>{mini.completed && "✓"}</button>
-        <div>
-          <h4 className={`text-[14px] font-medium ${mini.completed ? "text-[#8b7551] line-through" : "text-[#5b3925]"}`}>{mini.title}</h4>
-          <div className="flex items-center gap-2 text-[12px] text-[#8b7551] mt-1">
-            <span>{mini.timerDuration} min</span>
+    <>
+      <div className="group w-[75%] bg-[#fff5df]/90 border border-[#e5d4af] rounded-2xl px-4 py-2 flex items-center justify-between transition-all duration-300 hover:scale-[1.01] relative">
+        <div className="flex items-center gap-3">
+          <button onClick={handleCheckboxClick} className={`w-5 h-5 rounded-lg flex items-center justify-center text-white text-sm font-bold shrink-0 ${mini.completed ? "bg-[#67b84f]" : "border-2 border-[#d9c39a]"}`}>{mini.completed && "✓"}</button>
+          <div>
+            <h4 className={`text-[14px] font-medium ${mini.completed ? "text-[#8b7551] line-through" : "text-[#5b3925]"}`}>{mini.title}</h4>
+            <div className="flex items-center gap-2 text-[12px] text-[#8b7551] mt-1">
+              <span>{mini.timerDuration} min</span>
+            </div>
           </div>
         </div>
-      </div>
-      <div className="flex items-center gap-2">
-        {timer ? (
-          <span className="text-[#5b3925] font-mono">{Math.floor(timer/60)}:{String(timer%60).padStart(2,"0")}</span>
-        ) : (
-          <button onClick={() => startTimer(mini.timerDuration)} className="text-[#6c9f43]">Start</button>
+        <div className="flex items-center gap-2">
+          {timer ? (
+            <span className="text-[#5b3925] font-mono">{Math.floor(timer/60)}:{String(timer%60).padStart(2,"0")}</span>
+          ) : (
+            <button onClick={() => startTimer(mini.timerDuration)} className="text-[#6c9f43]">Start</button>
+          )}
+          {mini.completed && (
+            <button onClick={(e) => { e.stopPropagation(); onDelete(mini._id); }} className="opacity-0 group-hover:opacity-100 text-[#d45d7a] hover:text-[#b83b58] p-1 rounded-full transition-all duration-300" title="Delete Mini">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          )}
+        </div>
+        {showFinish && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="bg-[#fff5df]/90 border border-[#e5d4af] rounded-2xl p-6 w-80 text-center">
+              <h3 className="text-[#5b3925] font-bold mb-3">Mini task time finished 🐼</h3>
+              <button onClick={() => setShowFinish(false)} className="mr-2 px-3 py-1 bg-[#67b84f] text-white rounded">Close</button>
+              <button onClick={() => { extend(5); setShowFinish(false); }} className="mr-2 px-3 py-1 bg-[#6c9f43] text-white rounded">Extend 5 min</button>
+              <button onClick={() => { onToggleComplete(mini._id); setShowFinish(false); }} className="px-3 py-1 bg-[#78c85d] text-white rounded">Mark Done</button>
+            </div>
+          </div>
         )}
-        {mini.completed && (
-          <button onClick={(e) => { e.stopPropagation(); onDelete(mini._id); }} className="opacity-0 group-hover:opacity-100 text-[#d45d7a] hover:text-[#b83b58] p-1 rounded-full transition-all duration-300" title="Delete Mini">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-          </button>
-        )}
       </div>
-      {showFinish && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-[#fff5df]/90 border border-[#e5d4af] rounded-2xl p-6 w-80 text-center">
-            <h3 className="text-[#5b3925] font-bold mb-3">Mini task time finished 🐼</h3>
-            <button onClick={() => setShowFinish(false)} className="mr-2 px-3 py-1 bg-[#67b84f] text-white rounded">Close</button>
-            <button onClick={() => { extend(5); setShowFinish(false); }} className="mr-2 px-3 py-1 bg-[#6c9f43] text-white rounded">Extend 5 min</button>
-            <button onClick={() => { onToggleComplete(mini._id); setShowFinish(false); }} className="px-3 py-1 bg-[#78c85d] text-white rounded">Mark Done</button>
+
+      {showConfirmModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-[#fff9e6] rounded-3xl p-6 w-[400px] border-4 border-[#e3d2af] shadow-2xl flex flex-col items-center">
+            <h3 className="text-[18px] font-bold text-[#5b3925] text-center mb-6 leading-snug">
+              Kya tu maggie ki kasam khati hai ki ye task complete hai? 🍜
+            </h3>
+            <div className="flex gap-4 w-full">
+              <button
+                onClick={handleConfirm}
+                className="flex-1 bg-[#67b84f] hover:bg-[#78c85d] text-white font-bold py-3 rounded-xl shadow-md transition-transform hover:scale-105 active:scale-95"
+              >
+                Completed
+              </button>
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                className="flex-1 bg-[#d45d7a] hover:bg-[#e26a88] text-white font-bold py-3 rounded-xl shadow-md transition-transform hover:scale-105 active:scale-95"
+              >
+                No
+              </button>
+            </div>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 

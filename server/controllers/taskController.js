@@ -125,9 +125,35 @@ export const completeTask = async (req, res) => {
     await task.save();
 
     user.dailyStats.completedTasks += 1;
-    const reward = task.bambooReward || 5;
+    
+    let reward = 0;
+    if (task.taskType === "today") {
+      const pendingTodayTasks = await Task.countDocuments({ createdBy: user._id, taskType: "today", completed: false });
+      const remainingPool = 100 - user.claimedBambooToday;
+      if (remainingPool > 0) {
+        if (pendingTodayTasks === 0) {
+          reward = remainingPool;
+        } else {
+          reward = Math.floor(remainingPool / (pendingTodayTasks + 1));
+        }
+      }
+      user.claimedBambooToday += reward;
+    }
     user.bamboo += reward;
-    user.pandaMood = "happy";
+
+    // Check for today's task completion streak and bonus
+    const todayTasks = await Task.find({ createdBy: user._id, taskType: "today" });
+    const allTodayCompleted = todayTasks.length > 0 && todayTasks.every(t => t.completed);
+    if (allTodayCompleted) {
+      const today = new Date().toDateString();
+      const lastUpdate = user.lastStreakUpdate ? new Date(user.lastStreakUpdate).toDateString() : null;
+      if (today !== lastUpdate) {
+        user.streak += 1;
+        user.bamboo += 20; // bonus
+        user.lastStreakUpdate = new Date();
+      }
+    }
+
     await user.save();
 
     res.status(200).json({
@@ -137,6 +163,7 @@ export const completeTask = async (req, res) => {
       bamboo: user.bamboo,
       completedTasks: user.dailyStats.completedTasks,
       totalTasks: user.dailyStats.totalTasks,
+      streak: user.streak,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

@@ -9,7 +9,7 @@ const Navbar = () => {
 
   const navLinks = [
     { name: "TASK", path: "/tasks" },
-    { name: "FOCUS", path: "/dashboard" },
+    { name: "FOCUS", path: "/focus" },
     { name: "PANDA", path: "/panda-zone" }
   ]
 

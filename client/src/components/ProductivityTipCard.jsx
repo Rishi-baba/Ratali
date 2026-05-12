@@ -1,6 +1,8 @@
+import { useNavigate } from "react-router-dom";
 import pandaImage from "../assets/study-panda.png";
 
 const ProductivityTipCard = () => {
+  const navigate = useNavigate();
   return (
     <div
       className="
@@ -45,6 +47,7 @@ const ProductivityTipCard = () => {
           </p>
 
           <button
+            onClick={() => navigate("/focus")}
             className="
               mt-3
               bg-[#67b84f]

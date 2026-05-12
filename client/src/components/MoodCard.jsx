@@ -1,4 +1,9 @@
+import useAuthStore from "../store/authStore";
+
 const MoodCard = () => {
+  const { user } = useAuthStore();
+  const level = user?.pandaLevel || 1;
+
   return (
     <div
       className="
@@ -20,7 +25,7 @@ const MoodCard = () => {
           mb-3
         "
       >
-        Panda's Mood
+        Panda's Level
       </h2>
 
       {/* CONTENT */}
@@ -29,7 +34,7 @@ const MoodCard = () => {
         {/* panda icon */}
         <img
           src="https://cdn-icons-png.flaticon.com/128/3069/3069172.png"
-          alt="Panda Mood"
+          alt="Panda Level"
           className="w-14 h-14 object-contain"
         />
 
@@ -44,7 +49,7 @@ const MoodCard = () => {
               leading-none
             "
           >
-            Relaxed
+            Level {level}
           </h3>
 
           <p

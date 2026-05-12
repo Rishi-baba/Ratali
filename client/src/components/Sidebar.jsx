@@ -41,8 +41,8 @@ const Sidebar = ({ className }) => {
         <SidebarButton
           icon={<Brain size={20} />}
           label="Focus"
-          path="/dashboard"
-          active={location.pathname === "/dashboard"}
+          path="/focus"
+          active={location.pathname === "/focus"}
         />
 
       </div>
