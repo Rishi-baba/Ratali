@@ -104,16 +104,14 @@ const TaskBoard = ({ activeTab = "Today" }) => {
   };
 
   const renderTaskCard = (task) => {
-    let displayReward = task.bambooReward || task.reward || 5;
+    let displayReward = 0;
 
     if (task.taskType === "today" && !task.completed) {
       const pendingTodayTasksCount = tasks.filter(t => t.taskType === "today" && !t.completed).length;
       const remainingPool = Math.max(0, 100 - (user?.claimedBambooToday || 0));
-      if (pendingTodayTasksCount > 0) {
-        displayReward = Math.floor(remainingPool / pendingTodayTasksCount);
-      } else {
-        displayReward = remainingPool;
-      }
+      displayReward = Math.floor(remainingPool / Math.max(pendingTodayTasksCount, 5));
+    } else if (task.taskType === "today" && task.completed) {
+      displayReward = task.bambooReward || 0;
     }
 
     return (

@@ -1,120 +1,40 @@
-import {
-  Gift,
-} from "lucide-react";
-
 const DailyMissionCard = () => {
   return (
     <div
       className="
         h-full
         w-full
-        px-4
-        py-3
-        mt-3
+        px-6
+        py-4
+        mt-4
         flex
+        flex-col
         items-center
-        justify-between
-        gap-4
+        justify-center
+        text-center
         overflow-hidden
+        rounded-2xl
       "
     >
-
-      {/* LEFT */}
-      <div className="flex-1 min-w-0">
-
-        <h2
-          className="
-            text-[18px]
-            font-bold
-            text-[#5b3925]
-            leading-none
-          "
-        >
-          Daily Mission
-        </h2>
-
+      <div className="relative">
+        <span className="absolute -top-6 -left-4 text-4xl text-[#d6a04a]/20 font-serif">“</span>
         <p
           className="
-            text-[12px]
-            text-[#7a5a32]
-            mt-2
-            leading-snug
+            text-[14px]
+            md:text-[15px]
+            text-[#5b3925]
+            font-medium
+            leading-relaxed
+            italic
+            tracking-wide
           "
         >
-          Complete 5 tasks today
-          and earn bamboo rewards!
+          this is just a chapter not your whole story turn the page
         </p>
-
-        {/* progress */}
-        <div className="mt-3">
-
-          <div
-            className="
-              w-full
-              h-3
-              rounded-full
-              bg-[#e8d8b7]
-              overflow-hidden
-            "
-          >
-            <div
-              className="
-                h-full
-                w-[60%]
-                bg-[#67b84f]
-                rounded-full
-              "
-            />
-          </div>
-
-          <div className="flex items-center justify-between mt-1">
-
-            <span
-              className="
-                text-[11px]
-                text-[#7a5a32]
-              "
-            >
-              3 / 5 completed
-            </span>
-
-            <span
-              className="
-                text-[12px]
-                font-bold
-                text-[#67b84f]
-              "
-            >
-              🎋 150
-            </span>
-
-          </div>
-
-        </div>
-
+        <span className="absolute -bottom-10 -right-4 text-4xl text-[#d6a04a]/20 font-serif">”</span>
       </div>
-
-      {/* REWARD ICON */}
-      <div
-        className="
-          w-16
-          h-16
-          rounded-2xl
-          bg-[#f7e8cb]
-          flex
-          items-center
-          justify-center
-          shrink-0
-        "
-      >
-
-        <Gift
-          size={32}
-          className="text-[#d6a04a]"
-        />
-
-      </div>
-
+      
+      <div className="mt-4 w-12 h-1 bg-[#d6a04a]/30 rounded-full" />
     </div>
   );
 };

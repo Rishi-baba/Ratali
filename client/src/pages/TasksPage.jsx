@@ -12,7 +12,7 @@ import UpcomingDeadlinesCard from "../components/UpcomingDeadlinesCard";
 const TasksPage = () => {
   const [activeTab, setActiveTab] = useState("Today");
   return (
-    <div className="min-h-screen w-full bg-black flex items-center justify-center">
+    <div className="min-h-screen overflow-hidden w-full bg-black flex items-center justify-center">
 
       <div className="relative w-full max-w-400">
 

@@ -14,7 +14,7 @@ export const createTask = async (req, res) => {
       description,
       category,
       taskType,
-      bambooReward: bambooReward || 5,
+      bambooReward: bambooReward || 0,
       dueDate,
       repeatFrequency
     });
@@ -131,11 +131,7 @@ export const completeTask = async (req, res) => {
       const pendingTodayTasks = await Task.countDocuments({ createdBy: user._id, taskType: "today", completed: false });
       const remainingPool = 100 - user.claimedBambooToday;
       if (remainingPool > 0) {
-        if (pendingTodayTasks === 0) {
-          reward = remainingPool;
-        } else {
-          reward = Math.floor(remainingPool / (pendingTodayTasks + 1));
-        }
+        reward = Math.floor(remainingPool / Math.max(pendingTodayTasks + 1, 5));
       }
       user.claimedBambooToday += reward;
     }
