@@ -15,9 +15,10 @@ connectDB();
 app.use(
   cors({
     origin: [
+      "https://ratali.vercel.app/",
       "http://localhost:5173",
       "https://ratali-kwc7-hyhil3om0-rishis-projects-bca242e1.vercel.app",
-      "https://ratali.vercel.app/"
+      
     ],
     credentials: true,
   })
